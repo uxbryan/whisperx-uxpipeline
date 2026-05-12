@@ -1,147 +1,166 @@
 # whisperx-uxpipeline
 
-Self-hosted audio/video transcription with speaker diarization, Traditional Chinese
-conversion, and LLM punctuation polish.
+Self-hosted audio/video transcription pipeline. WhisperX transcription +
+pyannote speaker diarization + OpenCC Simplified→Traditional Chinese +
+optional Claude LLM punctuation polish + a simple FastAPI web UI.
 
-🎙️ Drop a recording in → get a readable transcript with timestamps and speaker labels.
+🎙️ Drop a recording in → get a readable transcript with timestamps and
+speaker labels.
+
+> **Audience.** This is for developers, sysadmins, or anyone comfortable
+> running a few Terminal commands. It's not a one-click install. If you
+> just want to transcribe a meeting and don't want to touch a terminal,
+> use a hosted service like Otter or Descript instead.
 
 ## What's in the box
 
-- **Web UI** for upload + job tracking (FastAPI + Bootstrap)
-- **WhisperX** transcription with three quality tiers (small / medium / large-v3)
-- **pyannote.audio** speaker diarization
-- **OpenCC** for Simplified → Traditional Chinese (skip or swap if you don't need it)
-- **Claude Haiku** for role classification and punctuation (optional, costs ~NT$1–3 per 30-min audio)
-- **Drop-folder watcher** + Web upload — both routes converge to the same job queue
-- **SQLite** job DB, no Redis/Postgres needed
-- **Slack webhook** completion notifications (optional)
+- WhisperX transcription with three quality tiers (small / medium / large-v3)
+- pyannote.audio speaker diarization
+- OpenCC for Simplified → Traditional Chinese
+- Optional Claude Haiku for role classification + punctuation polish
+- Drop-folder watcher + Web upload — both feed the same job queue
+- SQLite job store, no Redis/Postgres
+- Optional Slack-webhook completion notifications
 
-100% local pipeline except the last two steps (Claude API). Set `llm.enabled=false` in
-`config.json` to skip those and get a raw timestamped transcript without sending text anywhere.
+## Prerequisites
 
-## Quick start
+You need these installed on your machine before you start:
+
+| Requirement | macOS | Linux |
+|-------------|-------|-------|
+| Python 3.10 or newer | `brew install python@3.13` | `apt install python3.13 python3.13-venv` |
+| ffmpeg | `brew install ffmpeg` | `apt install ffmpeg` |
+| Git | usually preinstalled | `apt install git` |
+| HuggingFace account | sign up at <https://huggingface.co/join> |
+| Anthropic API key *(optional)* | <https://console.anthropic.com/> |
+
+## Install
 
 ```bash
 git clone https://github.com/uxbryan/whisperx-uxpipeline.git
 cd whisperx-uxpipeline
+./install.sh
 ```
 
-Three steps total. Follow them in order:
+`install.sh` verifies Python/ffmpeg are installed, creates a virtual
+environment in `.venv/`, and installs all dependencies. Takes 5–10
+minutes (~2.5 GB of Python packages).
 
-### Step 1 — get an `.env` file
+## Configure (one-time)
 
-Open
-[**uxbryan.github.io/whisperx-uxpipeline/setup.html**](https://uxbryan.github.io/whisperx-uxpipeline/setup.html)
-in your browser. The wizard walks you through:
+### 1. Get a HuggingFace token + accept gated model terms
 
-- Anthropic API key (for LLM punctuation polish — or skip to run free)
-- HuggingFace token + accepting pyannote terms (for speaker diarization)
-- Optional Slack webhook
-- Server/storage settings
+Log in to HuggingFace, then **on both of these pages**, click "Agree
+and access repository":
 
-At the end you get a `.env` file content. Save it to the repo root:
+- <https://huggingface.co/pyannote/speaker-diarization-3.1>
+- <https://huggingface.co/pyannote/segmentation-3.0>
+
+Both models are open-source academic licenses; you're just agreeing to
+citation requirements. Approval is instant.
+
+Then create a token at <https://huggingface.co/settings/tokens>:
+choose the **"Read"** classic type, name it anything, copy the `hf_...`
+string immediately (HuggingFace only shows it once).
+
+### 2. Get an Anthropic API key (optional)
+
+Skip this step if you don't want LLM-polished punctuation. Otherwise:
+get a key at <https://console.anthropic.com/>, add ~$5 credit
+(lasts hundreds of jobs).
+
+### 3. Create `.env`
 
 ```bash
-pbpaste > .env          # after clicking Copy in the wizard
-# or
-mv ~/Downloads/env.txt .env   # if you used Download
+cp .env.example .env
 ```
 
-The wizard runs 100% locally; values never leave your browser.
+Open `.env` in your editor and fill in:
 
-### Step 2 — install + verify
+```
+ANTHROPIC_API_KEY=sk-ant-...   # or remove this line if skipping LLM
+HF_TOKEN=hf_...
+LLM_ENABLED=true               # set false to skip LLM steps
+```
+
+Optional extras (defaults shown):
+```
+PORT=8901
+HOST=127.0.0.1
+SOURCE_DIR=./data/source
+RESULT_DIR=./data/result
+SLACK_WEBHOOK_URL=             # paste a Slack incoming-webhook URL to get completion DMs
+```
+
+### 4. (Optional) Verify setup before launching
 
 ```bash
-python3.13 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-
 .venv/bin/python scripts/check_setup.py
 ```
 
-`check_setup.py` is a verification script that tests every prerequisite:
-.env presence, Python version, ffmpeg, packages, API key validity,
-HuggingFace terms acceptance, storage permissions. Each item gets a ✓ or ✗
-with a concrete fix command. **Don't move to Step 3 until all ✓.**
+Tests every prerequisite (Python version, ffmpeg, packages, API key
+validity, pyannote terms acceptance, storage permissions) and prints
+✓ / ✗ with concrete fix instructions for each item.
 
-### Step 3 — launch
+## Run
 
 ```bash
-.venv/bin/python web/server.py
-# → open http://localhost:8901
+./run.sh
 ```
 
-First upload downloads Whisper (~770 MB for `medium`) + pyannote models
-to `~/.cache/huggingface/`. Subsequent uploads are fast.
+Open <http://localhost:8901> in your browser.
 
-## Upload routes
+## What happens on first upload
+
+When you upload your first audio file, pyannote (~500 MB) and Whisper
+(`medium`, ~770 MB) auto-download to `~/.cache/huggingface/`. Subsequent
+uploads are fast.
+
+## Upload paths
 
 Two ways to feed the pipeline:
 
-1. **Web UI** — drag-drop at `http://localhost:8901/upload`, pick type + quality
+1. **Web UI** — drag-drop at <http://localhost:8901/upload>, pick type
+   + quality
 2. **Drop folder** — drop files under `./data/source/<user>/<type>/<file>`
    - `<type>` ∈ `interview` | `lecture` | `other` (controls speaker labels)
-   - `<user>` is whatever subfolder name; used as the "owner" in the UI
+   - `<user>` is any subfolder name; used as the job "owner" in the UI
 
-Both produce a job, picked up by a worker that processes one at a time (Whisper saturates CPU).
+Both produce a job, picked up by a single worker (Whisper saturates CPU
+on its own; running two concurrently is slower than serial).
 
 ## Output
 
-Each job creates a folder at `./data/result/YYYY/MM/<job_id>/` with:
+Each job produces a folder at `./data/result/YYYY/MM/<job_id>/`:
 
-| File | What |
-|------|------|
+| File | Content |
+|------|---------|
 | `transcript.polished.txt` | The transcript you actually want (timestamps, speaker labels, LLM-polished punctuation) |
-| `transcript.raw.txt` | Same content but pre-LLM (no rewrites). Useful if you suspect the LLM messed something up. |
+| `transcript.raw.txt` | Same content pre-LLM. Useful as a fallback if the LLM rewrote something. |
 | `segments.json` | Structured segments with word-level alignment |
-| `speakers.json` | First N samples per speaker (input to the role-classification LLM call) |
+| `speakers.json` | First N samples per speaker (input to role classification) |
 | `meta.json` | Job metadata |
-
-## Configuration
-
-Edit `config.json`:
-
-```jsonc
-{
-  "service":     { "port": 8901, "host": "127.0.0.1" },
-  "storage":     { "source_dir": "./data/source", "result_dir": "./data/result" },
-  "whisper":     { "default_model": "medium", "device": "cpu", "compute_type": "int8" },
-  "llm":         { "enabled": true, "model": "anthropic/claude-haiku-4-5" },
-  "slack":       { "enabled": false }
-}
-```
-
-Environment variables (see `.env.example`):
-
-- `ANTHROPIC_API_KEY` — required if `llm.enabled` is true
-- `HF_TOKEN` — required to first-download pyannote
-- `SLACK_WEBHOOK_URL` — optional, completion notifications
-- `PORT`, `HOST`, `DEFAULT_USER`, `DB_PATH`, `PUBLIC_URL` — overrides
-
-## Documentation
-
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — pipeline internals, schema, decisions
 
 ## Auth and deployment
 
-This server ships with **no authentication**. It's designed for single-host single-user use.
+This server ships with **no authentication**. It's designed for
+single-host single-user use.
 
-For team deployment:
-- Put it behind a reverse proxy (nginx, Caddy, Cloudflare) with HTTP basic auth or SSO
-- Or fork and add your auth layer of choice
-
-Do NOT expose it directly to the public internet without auth.
+For team deployment, put it behind a reverse proxy (nginx, Caddy,
+Cloudflare Tunnel) with HTTP basic auth or your SSO of choice. Do not
+expose it directly to the public internet without auth.
 
 ## Performance
 
-Tested on Apple M4 Pro (10 perf cores, CPU + int8):
+Apple M4 Pro, CPU + int8:
 
 | Audio | small | medium | large-v3 |
 |-------|-------|--------|----------|
-| 5 min | ~30s  | ~1 min | ~2 min   |
-| 30 min| ~3 min| ~6 min | ~12 min  |
-| 1 hour| ~6 min| ~12min | ~25 min  |
+| 5 min | ~30 s | ~1 min | ~2 min |
+| 30 min | ~3 min | ~6 min | ~12 min |
+| 1 hour | ~6 min | ~12 min | ~25 min |
 
-Linux x86_64 with int8 should be similar. With CUDA / MPS the gap widens (especially `large-v3`).
+GPU (CUDA where supported) gives 3–10× speedup, mainly on `large-v3`.
 
 ## License
 
@@ -149,8 +168,7 @@ MIT — see [`LICENSE`](LICENSE).
 
 ## Acknowledgments
 
-Built on the shoulders of:
-
+Built on:
 - [WhisperX](https://github.com/m-bain/whisperX) — Whisper + alignment + diarization
 - [pyannote.audio](https://github.com/pyannote/pyannote-audio)
 - [faster-whisper](https://github.com/SYSTRAN/faster-whisper)

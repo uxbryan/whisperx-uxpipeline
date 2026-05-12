@@ -1,9 +1,6 @@
 #!/bin/bash
 # run.sh — Launch the server.
 # Run from the repo root: ./run.sh
-#
-# If .env is missing, the server will redirect you to a /setup page in the
-# browser to configure on-the-fly. No manual .env editing required.
 
 set -e
 
@@ -15,9 +12,9 @@ if [ ! -d .venv ]; then
 fi
 
 if [ ! -f .env ]; then
-  echo -e "${B}No .env found.${N} The server will start in setup mode."
-  echo "  Open http://localhost:8901 in your browser — it will guide you."
-  echo
+  echo -e "${R}✗ .env missing.${N} Copy .env.example to .env and fill in your tokens."
+  echo "  See README for details."
+  exit 1
 fi
 
 echo -e "${G}${B}Starting server on http://127.0.0.1:8901${N}"

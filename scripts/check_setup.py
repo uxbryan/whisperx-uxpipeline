@@ -83,7 +83,7 @@ def check_env_file() -> dict[str, str]:
     header("[1/8] .env file")
     if not ENV_PATH.exists():
         fail(f".env not found at {ENV_PATH}",
-             "Run the setup wizard (setup.html) and save the output to this exact path.")
+             "Copy .env.example to .env and fill in your tokens. See README.")
         return {}
 
     ok(f"found at {ENV_PATH}")
