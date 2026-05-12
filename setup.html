@@ -319,77 +319,65 @@
     </div>
     <div class="d-flex justify-content-between mt-4">
       <button class="btn btn-outline-secondary" onclick="prev()" data-en="← Back" data-zh="← 返回">← Back</button>
-      <button class="btn btn-orange px-4" onclick="generate()"
-              data-en="Generate .env →" data-zh="產生 .env →">Generate .env →</button>
+      <button class="btn btn-orange px-4" id="finish-btn" onclick="finishSetup()"
+              data-en="Finish →" data-zh="完成 →">Finish →</button>
     </div>
   </div>
 
-  <!-- ── Step 8: Done ── -->
+  <!-- ── Step 8: Done (server-saved mode) ── -->
   <div class="wizard-card d-none" id="step-8">
     <div class="step-title" data-en="done" data-zh="完成">done</div>
-    <h1 class="step-h" data-en="🎉 You're ready" data-zh="🎉 準備好了">🎉 You're ready</h1>
-    <p class="step-desc"
-       data-en="Save the content below as <code>.env</code> in your repo root, then start the server."
-       data-zh="把下面的內容存成 <code>.env</code> 放到 repo 根目錄，然後啟動 server。">
-    </p>
+    <h1 class="step-h" data-en="🎉 Configuration saved" data-zh="🎉 設定已儲存">🎉 Configuration saved</h1>
+    <div id="serverSavedBlock" style="display:none">
+      <p class="step-desc"
+         data-en="The server wrote your settings to <code>.env</code> automatically. You're ready to use the app."
+         data-zh="Server 已經自動把設定寫到 <code>.env</code>。馬上可以開始使用。">
+      </p>
+      <div class="alert alert-success" style="font-size:14px">
+        ✓ <span id="savedPath" style="font-family:ui-monospace,monospace;font-size:12px"></span>
+      </div>
+      <a href="/upload" class="btn btn-orange btn-lg px-5 mt-2">
+        <span data-en="Open the app →" data-zh="進入應用 →">Open the app →</span>
+      </a>
+      <p class="step-desc mt-4"
+         data-en="First upload note: Whisper + pyannote models (~1 GB total) auto-download on the first audio you process. That takes 5–10 min depending on your connection. Subsequent uploads are fast."
+         data-zh="首次上傳：Whisper + pyannote 模型（共約 1 GB）會在你處理第一個音檔時自動下載，依網速約 5-10 分鐘。之後就快了。">
+      </p>
+    </div>
 
-    <div class="mb-3">
-      <label class="form-label fw-semibold">.env</label>
-      <pre id="envOut"></pre>
-      <div class="d-flex gap-2">
-        <button class="btn btn-orange btn-sm" onclick="copyEnv()" data-en="📋 Copy" data-zh="📋 複製">📋 Copy</button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="downloadEnv()" data-en="⬇️ Download env.txt" data-zh="⬇️ 下載 env.txt">⬇️ Download env.txt</button>
-        <span id="copyOK" class="text-success small ms-2" style="line-height:32px;display:none"
-              data-en="Copied!" data-zh="已複製！">Copied!</span>
+    <!-- Fallback for file:// load (no server to save to) -->
+    <div id="staticFallbackBlock" style="display:none">
+      <p class="step-desc"
+         data-en="You opened this file directly (no server running yet). Two options to finish setup:"
+         data-zh="你是直接打開這個檔案（還沒跑 server）。兩種完成方式：">
+      </p>
+
+      <h6 class="fw-bold mt-3"
+          data-en="Recommended: let the server save for you"
+          data-zh="建議：讓 server 幫你存">Recommended: let the server save for you</h6>
+      <ol class="step-desc">
+        <li data-en="In Terminal, in the repo folder, run <code>./install.sh</code> (installs Python deps, 5-10 min)" data-zh="在 Terminal 進 repo 資料夾，跑 <code>./install.sh</code>（裝 Python 依賴，5-10 分鐘）"></li>
+        <li data-en="Then <code>./run.sh</code> — opens http://localhost:8901 in setup mode" data-zh="然後跑 <code>./run.sh</code> — 會在 http://localhost:8901 開啟 setup 模式"></li>
+        <li data-en="The server's wizard automatically saves your answers. No copy/paste." data-zh="Server 上的 wizard 會自動存你填的東西，不用 copy/paste。"></li>
+      </ol>
+
+      <h6 class="fw-bold mt-4"
+          data-en="Fallback: copy .env content manually"
+          data-zh="備案：手動複製 .env 內容">Fallback: copy .env content manually</h6>
+      <div class="mb-3">
+        <pre id="envOut"></pre>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary btn-sm" onclick="copyEnv()" data-en="📋 Copy" data-zh="📋 複製">📋 Copy</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="downloadEnv()" data-en="⬇️ Download env.txt" data-zh="⬇️ 下載 env.txt">⬇️ Download env.txt</button>
+          <span id="copyOK" class="text-success small ms-2" style="line-height:32px;display:none"
+                data-en="Copied!" data-zh="已複製！">Copied!</span>
+        </div>
       </div>
     </div>
 
-    <h5 class="mt-4">
-      <span data-en="3-step launch" data-zh="三步啟動">3-step launch</span>
-    </h5>
+    <!-- Error block -->
+    <div id="saveErrorBlock" class="alert alert-danger" style="display:none;font-size:14px"></div>
 
-    <p class="step-desc">
-      <strong data-en="Step 1 — save the .env above." data-zh="第 1 步 — 把上面的 .env 存到專案根目錄。">Step 1 — save the .env above.</strong>
-      <span data-en="In Terminal:" data-zh="在 Terminal 跑：">In Terminal:</span>
-    </p>
-    <pre>cd /path/to/whisperx-uxpipeline
-
-<span data-en="# Option A: after clicking the Copy button above" data-zh="# 方法 A：點上面的 Copy 按鈕之後"># Option A: after clicking the Copy button above</span>
-pbpaste > .env
-
-<span data-en="# Option B: if you used Download env.txt" data-zh="# 方法 B：如果你用 Download env.txt"># Option B: if you used Download env.txt</span>
-mv ~/Downloads/env.txt .env
-
-cat .env   <span data-en="# verify content is correct" data-zh="# 確認內容正確"># verify content is correct</span></pre>
-
-    <p class="step-desc mt-3">
-      <strong data-en="Step 2 — install dependencies + verify." data-zh="第 2 步 — 安裝依賴 + 驗證設定。">Step 2 — install dependencies + verify.</strong>
-    </p>
-    <pre>python3.13 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-
-.venv/bin/python scripts/check_setup.py    <span data-en="# ← run this!" data-zh="# ← 跑這一行！"># ← run this!</span></pre>
-    <div class="alert alert-info" style="font-size:13px"
-         data-en="The check script tests everything: .env location, Python version, ffmpeg, packages, API key validity, HuggingFace terms acceptance, and storage permissions. It prints ✓ / ✗ for each item with concrete fix instructions. <strong>Don't proceed to Step 3 until all checks pass.</strong>"
-         data-zh="檢查腳本會驗證每件事：.env 位置、Python 版本、ffmpeg、套件、API key 有效性、HuggingFace 條款是否接受、儲存權限。每項印 ✓ / ✗ 並給具體修正指令。<strong>全部通過再做第 3 步。</strong>">
-    </div>
-
-    <p class="step-desc mt-3">
-      <strong data-en="Step 3 — launch the server." data-zh="第 3 步 — 啟動 server。">Step 3 — launch the server.</strong>
-    </p>
-    <pre>.venv/bin/python web/server.py
-
-<span data-en="# Open" data-zh="# 開啟"># Open</span> <span id="launchUrl">http://127.0.0.1:8901</span> <span data-en="in your browser." data-zh="在瀏覽器。">in your browser.</span></pre>
-
-    <p class="step-desc mt-3"
-       data-en="First upload note: Whisper + pyannote models (~1 GB total) auto-download on the first audio you process. That takes 5–10 min depending on your connection. Subsequent uploads are fast."
-       data-zh="首次上傳：Whisper + pyannote 模型（共約 1 GB）會在你處理第一個音檔時自動下載，依網速約 5-10 分鐘。之後就快了。">
-    </p>
-
-    <p class="step-desc mt-3"
-       data-en="First-run note: pyannote and Whisper models (~1 GB for <code>medium</code>) auto-download on your first upload. That takes a few minutes."
-       data-zh="首次執行：pyannote 和 Whisper 模型（<code>medium</code> 約 1 GB）會在你第一次上傳時自動下載，需要幾分鐘。">
-    </p>
     <div class="d-flex justify-content-start mt-4">
       <button class="btn btn-outline-secondary" onclick="prev()" data-en="← Back" data-zh="← 返回">← Back</button>
     </div>
@@ -584,36 +572,81 @@ function show(n) {
 function next() { if (step < total) { step++; show(step); } }
 function prev() { if (step > 1) { step--; show(step); } }
 
-function generate() {
-  const skipLlm  = document.getElementById('skipLlm').checked;
-  const aKey     = document.getElementById('anthropicKey').value.trim();
-  const hfToken  = document.getElementById('hfToken').value.trim();
-  const slack    = document.getElementById('slackWebhook').value.trim();
-  const port     = document.getElementById('port').value.trim() || '8901';
-  const host     = document.getElementById('host').value.trim() || '127.0.0.1';
-  const srcDir   = document.getElementById('sourceDir').value.trim() || './data/source';
-  const resDir   = document.getElementById('resultDir').value.trim() || './data/result';
+// Detect if we're loaded by the server (http/https) or as a local file
+const isServedByServer = (location.protocol === 'http:' || location.protocol === 'https:');
 
-  const lines = [];
-  lines.push('# Generated by setup.html on ' + new Date().toISOString().slice(0, 10));
+function gatherValues() {
+  return {
+    skipLlm:    document.getElementById('skipLlm').checked,
+    aKey:       document.getElementById('anthropicKey').value.trim(),
+    hfToken:    document.getElementById('hfToken').value.trim(),
+    slack:      document.getElementById('slackWebhook').value.trim(),
+    port:       document.getElementById('port').value.trim() || '8901',
+    host:       document.getElementById('host').value.trim() || '127.0.0.1',
+    srcDir:     document.getElementById('sourceDir').value.trim() || './data/source',
+    resDir:     document.getElementById('resultDir').value.trim() || './data/result',
+  };
+}
+
+function buildEnvText(v) {
+  const lines = ['# Generated by setup wizard on ' + new Date().toISOString().slice(0, 10), ''];
+  if (v.skipLlm) lines.push('LLM_ENABLED=false');
+  else           lines.push('ANTHROPIC_API_KEY=' + (v.aKey || 'sk-ant-...'));
+  lines.push('HF_TOKEN=' + (v.hfToken || 'hf_...'));
+  if (v.slack) lines.push('SLACK_WEBHOOK_URL=' + v.slack);
   lines.push('');
-  if (skipLlm) {
-    lines.push('LLM_ENABLED=false');
+  if (v.port !== '8901') lines.push('PORT=' + v.port);
+  if (v.host !== '127.0.0.1') lines.push('HOST=' + v.host);
+  if (v.srcDir !== './data/source') lines.push('SOURCE_DIR=' + v.srcDir);
+  if (v.resDir !== './data/result') lines.push('RESULT_DIR=' + v.resDir);
+  return lines.join('\n') + '\n';
+}
+
+async function finishSetup() {
+  const v = gatherValues();
+  // Always prepare the static env text (for fallback display)
+  document.getElementById('envOut').textContent = buildEnvText(v);
+
+  if (isServedByServer) {
+    // Server-backed save: POST to /api/setup, then redirect on success
+    const btn = document.getElementById('finish-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    try {
+      const fd = new FormData();
+      fd.append('anthropic_api_key', v.aKey);
+      fd.append('hf_token', v.hfToken);
+      fd.append('slack_webhook_url', v.slack);
+      fd.append('llm_enabled', v.skipLlm ? 'false' : 'true');
+      fd.append('port', v.port);
+      fd.append('host', v.host);
+      fd.append('source_dir', v.srcDir);
+      fd.append('result_dir', v.resDir);
+
+      const resp = await fetch('/api/setup', { method: 'POST', body: fd });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.detail || 'Save failed');
+
+      next();   // show step-8 success block
+      document.getElementById('serverSavedBlock').style.display = 'block';
+      document.getElementById('staticFallbackBlock').style.display = 'none';
+      document.getElementById('savedPath').textContent = data.saved_to;
+    } catch (err) {
+      document.getElementById('saveErrorBlock').style.display = 'block';
+      document.getElementById('saveErrorBlock').textContent = 'Failed: ' + err.message + ' — falling back to manual copy.';
+      next();
+      document.getElementById('serverSavedBlock').style.display = 'none';
+      document.getElementById('staticFallbackBlock').style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Finish →';
+    }
   } else {
-    lines.push('ANTHROPIC_API_KEY=' + (aKey || 'sk-ant-...'));
+    // Static file mode: show the manual copy/download fallback
+    next();
+    document.getElementById('serverSavedBlock').style.display = 'none';
+    document.getElementById('staticFallbackBlock').style.display = 'block';
   }
-  lines.push('HF_TOKEN=' + (hfToken || 'hf_...'));
-  if (slack) lines.push('SLACK_WEBHOOK_URL=' + slack);
-  lines.push('');
-  if (port !== '8901') lines.push('PORT=' + port);
-  if (host !== '127.0.0.1') lines.push('HOST=' + host);
-  if (srcDir !== './data/source') lines.push('SOURCE_DIR=' + srcDir);
-  if (resDir !== './data/result') lines.push('RESULT_DIR=' + resDir);
-
-  const env = lines.join('\n') + '\n';
-  document.getElementById('envOut').textContent = env;
-  document.getElementById('launchUrl').textContent = 'http://' + host + ':' + port;
-  next();
 }
 
 function copyEnv() {
