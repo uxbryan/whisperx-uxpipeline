@@ -297,17 +297,20 @@
       <pre id="envOut"></pre>
       <div class="d-flex gap-2">
         <button class="btn btn-orange btn-sm" onclick="copyEnv()" data-en="📋 Copy" data-zh="📋 複製">📋 Copy</button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="downloadEnv()" data-en="⬇️ Download .env" data-zh="⬇️ 下載 .env">⬇️ Download .env</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="downloadEnv()" data-en="⬇️ Download env.txt" data-zh="⬇️ 下載 env.txt">⬇️ Download env.txt</button>
         <span id="copyOK" class="text-success small ms-2" style="line-height:32px;display:none"
               data-en="Copied!" data-zh="已複製！">Copied!</span>
       </div>
     </div>
 
-    <h5 class="mt-4" data-en="Next: launch the server" data-zh="下一步：啟動 server">Next: launch the server</h5>
+    <h5 class="mt-4" data-en="Next: save .env and launch" data-zh="下一步：存 .env 並啟動">Next: save .env and launch</h5>
     <pre>cd /path/to/whisperx-uxpipeline
 
-<span data-en="# Save the .env shown above to the repo root."
-      data-zh="# 把上面的 .env 內容存到 repo 根目錄。"># Save the .env shown above to the repo root.</span>
+<span data-en="# After clicking Copy above, paste into .env:"
+      data-zh="# 點上面 Copy 之後，貼進 .env："># After clicking Copy above, paste into .env:</span>
+pbpaste > .env             <span data-en="# macOS" data-zh="# macOS"># macOS</span>
+<span data-en="# or if you used Download env.txt:" data-zh="# 或如果用 Download env.txt："># or if you used Download env.txt:</span>
+mv ~/Downloads/env.txt .env
 
 python3.13 -m venv .venv
 .venv/bin/pip install -r requirements.txt
@@ -531,11 +534,13 @@ function copyEnv() {
 }
 
 function downloadEnv() {
+  // Download as env.txt — macOS / Finder refuses dotfile filenames on save.
+  // After downloading, the user renames: mv env.txt .env
   const txt = document.getElementById('envOut').textContent;
   const blob = new Blob([txt], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = '.env';
+  a.download = 'env.txt';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
