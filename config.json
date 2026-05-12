@@ -1,0 +1,37 @@
+{
+  "service": {
+    "name": "whisperx-uxpipeline",
+    "port": 8901,
+    "host": "127.0.0.1"
+  },
+  "storage": {
+    "source_dir": "./data/source",
+    "result_dir": "./data/result",
+    "archive_dir": "./data/archive"
+  },
+  "local": {
+    "scratch_dir": "./data/cache",
+    "db_path": "./data/jobs.db"
+  },
+  "whisper": {
+    "default_model": "medium",
+    "allowed_models": ["small", "medium", "large-v3"],
+    "device": "cpu",
+    "compute_type": "int8",
+    "batch_size": 16,
+    "language": "zh"
+  },
+  "diarization": {
+    "enabled": true
+  },
+  "llm": {
+    "enabled": true,
+    "model": "anthropic/claude-haiku-4-5",
+    "chunk_minutes": 5,
+    "parallel_chunks": 3
+  },
+  "slack": {
+    "enabled": false
+  },
+  "supported_extensions": [".mp4", ".mov", ".mkv", ".webm", ".mp3", ".m4a", ".wav", ".flac", ".ogg"]
+}

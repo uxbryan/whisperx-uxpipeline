@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ job.original_name }} — whisperx-uxpipeline{% endblock %}
+
+{% block content %}
+<a href="/jobs" class="text-muted text-decoration-none small">← Back to jobs</a>
+
+<div class="card p-4 mt-2">
+  <h4 class="mb-1">{{ job.original_name }}</h4>
+  <div class="text-muted small mb-3">Job ID: <code>{{ job.id }}</code></div>
+
+  <div class="row g-3">
+    <div class="col-md-3"><div class="text-muted small">Status</div>
+      <div class="fw-semibold">{{ job.status }}</div></div>
+    <div class="col-md-3"><div class="text-muted small">Progress</div>
+      <div>{{ job.progress_pct }}%</div></div>
+    <div class="col-md-3"><div class="text-muted small">Type</div>
+      <div>{{ job.meeting_type }}</div></div>
+    <div class="col-md-3"><div class="text-muted small">LLM cost</div>
+      <div>{{ '%.4f'|format(job.cost_ntd or 0) }}</div></div>
+  </div>
+
+  {% if job.status not in ('done', 'failed') %}
+    <div class="progress mt-4" style="height: 8px;">
+      <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+           style="width: {{ job.progress_pct }}%"></div>
+    </div>
+    <div class="mt-2 text-muted small">Processing — auto-refreshes every 5s</div>
+  {% endif %}
+
+  {% if job.status == 'failed' and job.error_msg %}
+    <div class="alert alert-danger mt-3">
+      <strong>Error:</strong>
+      <pre class="mb-0 small">{{ job.error_msg }}</pre>
+    </div>
+  {% endif %}
+
+  {% if job.status == 'done' %}
+    <hr class="my-4">
+    <a class="btn btn-orange" href="/api/jobs/{{ job.id }}/download/polished">
+      📄 Download transcript
+    </a>
+  {% endif %}
+</div>
+
+<script>
+if ({{ 'true' if job.status not in ('done','failed') else 'false' }}) {
+  setTimeout(() => location.reload(), 5000);
+}
+</script>
+{% endblock %}

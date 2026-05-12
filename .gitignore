@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+*.log
+*.err.log
+.DS_Store
+node_modules/
+
+# Local data (not committed)
+data/
+models/
+cache/
+*.db
+*.db-journal
+
+# Test fixtures
+test_uploads/

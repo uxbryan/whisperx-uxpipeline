@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setup — whisperx-uxpipeline</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<style>
+  body { background:#e8ecf0; font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Segoe UI",sans-serif; min-height:100vh; padding-bottom:80px; }
+  .navbar { background:#fff; border-bottom:1px solid #e2e8f0; }
+  .wizard-card { background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.08); padding:32px; }
+  .step-title { font-size:11px; font-weight:700; color:#f97316; letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; }
+  .step-h { font-size:22px; font-weight:700; color:#1e293b; margin-bottom:12px; }
+  .step-desc { font-size:14px; color:#475569; line-height:1.75; }
+  .progress-pills { display:flex; gap:6px; margin-bottom:24px; }
+  .pill { flex:1; height:6px; border-radius:3px; background:#e2e8f0; transition: background .2s; }
+  .pill.done { background:#16a34a; }
+  .pill.active { background:#f97316; }
+  .form-hint { font-size:12px; color:#94a3b8; margin-top:4px; }
+  .btn-orange { background:#f97316; color:#fff; border:none; }
+  .btn-orange:hover { background:#ea580c; color:#fff; }
+  pre { background:#f1f5f9; padding:16px; border-radius:8px; font-size:13px; line-height:1.7; overflow-x:auto; }
+  .skip-link { font-size:13px; color:#94a3b8; cursor:pointer; text-decoration:underline; }
+  .skip-link:hover { color:#475569; }
+  .external-link { color:#f97316; font-weight:600; text-decoration:none; }
+  .external-link:hover { text-decoration:underline; }
+  .pipeline-box { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+  .pipeline-step { flex:1; min-width:120px; padding:10px; background:#f8fafc; border-left:3px solid #16a34a; border-radius:4px; font-size:12px; }
+  .pipeline-step.cloud { border-left-color:#f97316; }
+  .pipeline-step .num { font-weight:700; color:#94a3b8; font-size:10px; }
+  .footer-bar { position:fixed; bottom:0; left:0; width:100%; background:#fff; border-top:1px solid #e2e8f0; padding:10px 24px; text-align:center; font-size:11px; color:#94a3b8; }
+
+  /* info icon */
+  .info-btn { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#e2e8f0; color:#475569; font-size:11px; font-weight:700; cursor:pointer; border:none; margin-left:4px; vertical-align:middle; transition:all .15s; }
+  .info-btn:hover { background:#f97316; color:#fff; }
+
+  /* lang toggle */
+  .lang-toggle { display:inline-flex; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; }
+  .lang-toggle button { background:#fff; border:none; padding:4px 12px; font-size:12px; color:#94a3b8; cursor:pointer; }
+  .lang-toggle button.active { background:#f97316; color:#fff; font-weight:600; }
+
+  .modal-body p { color:#475569; line-height:1.75; font-size:14px; }
+  .info-section { margin-bottom:16px; }
+  .info-section-title { font-size:11px; font-weight:700; color:#f97316; letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px; }
+</style>
+</head>
+<body>
+
+<nav class="navbar border-bottom px-3 px-md-4 py-2 d-flex align-items-center">
+  <a href="/" class="d-flex align-items-center gap-2 text-decoration-none" style="color:#1e293b">
+    <span style="font-size:22px">🎙️</span>
+    <span style="font-weight:700;letter-spacing:.05em;font-size:14px">whisperx-uxpipeline · setup</span>
+  </a>
+  <div class="ms-auto lang-toggle">
+    <button id="lang-en" class="active" onclick="setLang('en')">EN</button>
+    <button id="lang-zh" onclick="setLang('zh')">中文</button>
+  </div>
+</nav>
+
+<div class="container py-4" style="max-width:760px">
+  <div class="progress-pills" id="progress">
+    <div class="pill active"></div><div class="pill"></div><div class="pill"></div>
+    <div class="pill"></div><div class="pill"></div><div class="pill"></div>
+    <div class="pill"></div><div class="pill"></div>
+  </div>
+  <div class="text-muted text-center mb-3" style="font-size:12px">
+    <span data-en="Step" data-zh="第">Step</span>
+    <span id="stepNum">1</span>
+    <span data-en="of" data-zh="／ 共">of</span>
+    <span id="stepTotal">8</span>
+    <span data-en="" data-zh="步"></span>
+  </div>
+
+  <!-- ── Step 1: Welcome ── -->
+  <div class="wizard-card" id="step-1">
+    <div class="step-title" data-en="welcome" data-zh="歡迎">welcome</div>
+    <h1 class="step-h"
+        data-en="Let's get whisperx-uxpipeline running 🎙️"
+        data-zh="把 whisperx-uxpipeline 跑起來 🎙️">Let's get whisperx-uxpipeline running 🎙️</h1>
+    <p class="step-desc"
+       data-en="This wizard collects the tokens and settings you need. <strong>Everything stays in your browser</strong> — values are never sent anywhere. At the end you'll get a ready-to-paste <code>.env</code> file and the launch commands."
+       data-zh="這個精靈會收集你需要的 token 和設定。<strong>所有資料只留在瀏覽器</strong>，不會傳到任何地方。完成後你會拿到一份可直接貼上的 <code>.env</code> 檔，以及啟動指令。">
+    </p>
+    <div class="step-desc">
+      <span data-en="You'll need (~10 minutes total):" data-zh="你需要準備（總共約 10 分鐘）：">You'll need (~10 minutes total):</span>
+      <ul>
+        <li data-en-html="An <strong>Anthropic API key</strong> (or skip LLM polish to run free)"
+            data-zh-html="一支 <strong>Anthropic API key</strong>（或選擇跳過 LLM 精修以免費執行）">
+            An <strong>Anthropic API key</strong> (or skip LLM polish to run free)</li>
+        <li data-en-html="A <strong>HuggingFace token</strong> + accepted pyannote terms"
+            data-zh-html="一個 <strong>HuggingFace token</strong>，並接受 pyannote 模型使用條款">
+            A <strong>HuggingFace token</strong> + accepted pyannote terms</li>
+        <li data-en="Python 3.10+, ffmpeg installed on your machine"
+            data-zh="本機已裝 Python 3.10+ 與 ffmpeg">
+            Python 3.10+, ffmpeg installed on your machine</li>
+      </ul>
+    </div>
+    <div class="d-flex justify-content-end mt-4">
+      <button class="btn btn-orange px-4" onclick="next()"
+              data-en="Start →" data-zh="開始 →">Start →</button>
+    </div>
+  </div>
+
+  <!-- ── Step 2: Pipeline overview ── -->
+  <div class="wizard-card d-none" id="step-2">
+    <div class="step-title" data-en="pipeline overview" data-zh="流程總覽">pipeline overview</div>
+    <h1 class="step-h" data-en="What happens to your audio" data-zh="音檔會經過什麼">What happens to your audio</h1>
+    <p class="step-desc"
+       data-en="Your audio goes through 6 steps. The first 4 run <strong>entirely on your machine</strong>. Only the last 2 send <em>text</em> (never audio) to Anthropic's API."
+       data-zh="音檔會經過 6 個步驟處理。前 4 步<strong>完全在本機運行</strong>，只有最後 2 步會把<em>文字</em>（不是音訊）送到 Anthropic API。">
+    </p>
+    <div class="pipeline-box">
+      <div class="pipeline-step"><div class="num">1 LOCAL</div><span data-en="Transcribe (WhisperX)" data-zh="轉錄 (WhisperX)">Transcribe (WhisperX)</span></div>
+      <div class="pipeline-step"><div class="num">2 LOCAL</div><span data-en="Word alignment" data-zh="時戳對齊">Word alignment</span></div>
+      <div class="pipeline-step"><div class="num">3 LOCAL</div><span data-en="Speaker diarization" data-zh="聲紋分群">Speaker diarization</span></div>
+    </div>
+    <div class="pipeline-box">
+      <div class="pipeline-step"><div class="num">4 LOCAL</div><span data-en="S→T Chinese (OpenCC)" data-zh="簡轉繁 (OpenCC)">S→T Chinese (OpenCC)</span></div>
+      <div class="pipeline-step cloud"><div class="num">5 CLOUD</div><span data-en="Role classification" data-zh="角色判斷">Role classification</span></div>
+      <div class="pipeline-step cloud"><div class="num">6 CLOUD</div><span data-en="Punctuation polish" data-zh="標點補齊">Punctuation polish</span></div>
+    </div>
+    <p class="step-desc mt-3"
+       data-en="Cost per 30 min of audio for cloud steps: <strong>NT$ 1–3</strong>. You can disable them entirely in the next step."
+       data-zh="雲端步驟成本：每 30 分鐘音訊約 <strong>NT$ 1–3</strong>。下一步可以選擇完全停用。">
+    </p>
+    <div class="d-flex justify-content-between mt-4">
+      <button class="btn btn-outline-secondary" onclick="prev()" data-en="← Back" data-zh="← 返回">← Back</button>
+      <button class="btn btn-orange px-4" onclick="next()" data-en="Next →" data-zh="下一步 →">Next →</button>
+    </div>
+  </div>
+
+  <!-- ── Step 3: Anthropic ── -->
+  <div class="wizard-card d-none" id="step-3">
+    <div class="step-title" data-en="cloud llm" data-zh="雲端 LLM">cloud llm</div>
+    <h1 class="step-h">
+      <span data-en="Anthropic API key" data-zh="Anthropic API key">Anthropic API key</span>
+      <button class="info-btn" data-bs-toggle="modal" data-bs-target="#modal-anthropic" title="What is Anthropic?">i</button>
+    </h1>
+    <p class="step-desc"
+       data-en="Used for Steps 5–6 (role classification + punctuation polish). The <em>text</em> of your transcript is sent to Anthropic; the <em>audio</em> never leaves your machine."
+       data-zh="用在第 5、6 步（角色判斷 + 標點補齊）。逐字稿<em>文字</em>會送給 Anthropic，<em>音訊</em>則完全留在本機。">
+    </p>
+    <p class="step-desc"
+       data-en='Get a key: <a href="https://console.anthropic.com/" target="_blank" class="external-link">console.anthropic.com → API Keys →</a> Create Key. Add ~$5 credit; that lasts hundreds of jobs.'
+       data-zh='取得 key：<a href="https://console.anthropic.com/" target="_blank" class="external-link">console.anthropic.com → API Keys →</a> Create Key。儲值約 $5 美金可用上百次。'>
+    </p>
+    <div class="mb-3">
+      <label class="form-label fw-semibold" data-en="Paste your key" data-zh="貼上你的 key">Paste your key</label>
+      <input type="password" class="form-control" id="anthropicKey" placeholder="sk-ant-...">
+      <div class="form-hint" data-en="Starts with sk-ant-. Stored only in this browser." data-zh="開頭是 sk-ant-。只存在這個瀏覽器。"></div>
+    </div>
+    <div class="form-check mb-3">
+      <input type="checkbox" class="form-check-input" id="skipLlm">
+      <label class="form-check-label" for="skipLlm"
+             data-en="I want to skip LLM polish (no Anthropic key needed, transcript will be raw)"
+             data-zh="我要跳過 LLM 精修（不需要 Anthropic key，逐字稿會是原始版）">
+      </label>
+    </div>
+    <div class="d-flex justify-content-between mt-4">
+      <button class="btn btn-outline-secondary" onclick="prev()" data-en="← Back" data-zh="← 返回">← Back</button>
+      <button class="btn btn-orange px-4" onclick="next()" data-en="Next →" data-zh="下一步 →">Next →</button>
+    </div>
+  </div>
+
+  <!-- ── Step 4: HuggingFace ── -->
+  <div class="wizard-card d-none" id="step-4">
+    <div class="step-title" data-en="speaker diarization" data-zh="聲紋分群">speaker diarization</div>
+    <h1 class="step-h">
+      <span data-en="HuggingFace token" data-zh="HuggingFace token">HuggingFace token</span>
+      <button class="info-btn" data-bs-toggle="modal" data-bs-target="#modal-hf" title="What is HuggingFace?">i</button>
+    </h1>
+    <p class="step-desc"
+       data-en="Used to download the <code>pyannote</code> speaker diarization model on first run. Token is only needed once; model is then cached locally."
+       data-zh="用來下載 <code>pyannote</code> 聲紋分群模型（只在第一次需要，之後模型 cache 在本機）。">
+    </p>
+    <div class="step-desc">
+      <strong data-en="Two steps required:" data-zh="兩步驟：">Two steps required:</strong>
+      <ol style="font-size:14px;line-height:1.75">
+        <li data-en-html='Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" class="external-link">huggingface.co/settings/tokens →</a> Create new (read access is enough)'
+            data-zh-html='到 <a href="https://huggingface.co/settings/tokens" target="_blank" class="external-link">huggingface.co/settings/tokens →</a> 取得免費 token（read 權限即可）'>
+            Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" class="external-link">huggingface.co/settings/tokens →</a> Create new (read access is enough)
+        </li>
+        <li data-en-html='Accept the pyannote terms: visit <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank" class="external-link">pyannote/speaker-diarization-3.1 →</a> and click "Agree and access repository"'
+            data-zh-html='接受 pyannote 條款：到 <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank" class="external-link">pyannote/speaker-diarization-3.1 →</a> 點「Agree and access repository」'>
+            Accept the pyannote terms
+        </li>
+      </ol>
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold" data-en="Paste your token" data-zh="貼上你的 token">Paste your token</label>
+      <input type="password" class="form-control" id="hfToken" placeholder="hf_...">
+      <div class="form-hint" data-en="Starts with hf_. Stored only in this browser." data-zh="開頭是 hf_。只存在這個瀏覽器。"></div>
+    </div>
+    <div class="d-flex justify-content-between mt-4">
+      <button class="btn btn-outline-secondary" onclick="prev()" data-en="← Back" data-zh="← 返回">← Back</button>
+      <button class="btn btn-orange px-4" onclick="next()" data-en="Next →" data-zh="下一步 →">Next →</button>
+    </div>
+  </div>
+
+  <!-- ── Step 5: Slack ── -->
+  <div class="wizard-card d-none" id="step-5">
+    <div class="step-title" data-en="notifications (optional)" data-zh="通知（選用）">notifications (optional)</div>
+    <h1 class="step-h">
+      <span data-en="Slack webhook" data-zh="Slack webhook">Slack webhook</span>
+      <button class="info-btn" data-bs-toggle="modal" data-bs-target="#modal-slack" title="What is Slack?">i</button>
+    </h1>
+    <p class="step-desc"
+       data-en="Get a Slack message when a transcription job finishes (or fails). Skip this if you don't use Slack."
+       data-zh="當轉錄完成或失敗時收到 Slack 訊息。不用 Slack 就跳過。">
+    </p>
+    <p class="step-desc"
+       data-en='Create an Incoming Webhook at <a href="https://api.slack.com/messaging/webhooks" target="_blank" class="external-link">api.slack.com/messaging/webhooks →</a> Pick the channel you want notifications in.'
+       data-zh='到 <a href="https://api.slack.com/messaging/webhooks" target="_blank" class="external-link">api.slack.com/messaging/webhooks →</a> 建立 Incoming Webhook，選一個你想收通知的頻道。'>
+    </p>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">
+        <span data-en="Webhook URL" data-zh="Webhook URL">Webhook URL</span>
+        <span class="text-muted" data-en="(optional)" data-zh="（選用）">(optional)</span>
+      </label>
+      <input type="text" class="form-control" id="slackWebhook" placeholder="https://hooks.slack.com/services/...">
+    </div>
+    <div class="d-flex justify-content-between mt-4">
+      <button class="btn btn-outline-secondary" onclick="prev()" data-en="← Back" data-zh="← 返回">← Back</button>
+      <div>
+        <span class="skip-link me-3" onclick="next()" data-en="Skip →" data-zh="跳過 →">Skip →</span>
+        <button class="btn btn-orange px-4" onclick="next()" data-en="Next →" data-zh="下一步 →">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Step 6: Server ── -->
+  <div class="wizard-card d-none" id="step-6">
+    <div class="step-title" data-en="server (optional)" data-zh="伺服器（選用）">server (optional)</div>
+    <h1 class="step-h" data-en="Where it should run" data-zh="伺服器要跑在哪">Where it should run</h1>
+    <p class="step-desc"
+       data-en="Defaults are fine for most cases. Tweak if you have a conflict."
+       data-zh="預設值大多時候沒問題，有衝突時再改。">
+    </p>
+    <div class="row g-3 mb-3">
+      <div class="col-6">
+        <label class="form-label fw-semibold" data-en="Port" data-zh="Port">Port</label>
+        <input type="number" class="form-control" id="port" value="8901">
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-semibold" data-en="Host" data-zh="Host">Host</label>
+        <input type="text" class="form-control" id="host" value="127.0.0.1">
+        <div class="form-hint" data-en="Use 0.0.0.0 to allow LAN access." data-zh="改 0.0.0.0 讓 LAN 內其他電腦也能連。"></div>
+      </div>
+    </div>
+    <div class="d-flex justify-content-between mt-4">
+      <button class="btn btn-outline-secondary" onclick="prev()" data-en="← Back" data-zh="← 返回">← Back</button>
+      <button class="btn btn-orange px-4" onclick="next()" data-en="Next →" data-zh="下一步 →">Next →</button>
+    </div>
+  </div>
+
+  <!-- ── Step 7: Storage ── -->
+  <div class="wizard-card d-none" id="step-7">
+    <div class="step-title" data-en="storage (optional)" data-zh="儲存位置（選用）">storage (optional)</div>
+    <h1 class="step-h" data-en="Where to store data" data-zh="資料存哪裡">Where to store data</h1>
+    <p class="step-desc"
+       data-en="Defaults put everything inside the repo's <code>./data/</code> folder. Change if you want uploads / results to live elsewhere (NFS / NAS mount / external drive)."
+       data-zh="預設放在 repo 的 <code>./data/</code> 目錄。若你想上傳檔 / 結果放別處（NFS / NAS / 外接碟）就改路徑。">
+    </p>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">
+        <span data-en="Source dir" data-zh="上傳目錄">Source dir</span>
+        <span class="text-muted" data-en="(uploads land here)" data-zh="（上傳檔放這）">(uploads land here)</span>
+      </label>
+      <input type="text" class="form-control" id="sourceDir" value="./data/source">
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">
+        <span data-en="Result dir" data-zh="結果目錄">Result dir</span>
+        <span class="text-muted" data-en="(transcripts written here)" data-zh="（逐字稿寫到這）">(transcripts written here)</span>
+      </label>
+      <input type="text" class="form-control" id="resultDir" value="./data/result">
+    </div>
+    <div class="d-flex justify-content-between mt-4">
+      <button class="btn btn-outline-secondary" onclick="prev()" data-en="← Back" data-zh="← 返回">← Back</button>
+      <button class="btn btn-orange px-4" onclick="generate()"
+              data-en="Generate .env →" data-zh="產生 .env →">Generate .env →</button>
+    </div>
+  </div>
+
+  <!-- ── Step 8: Done ── -->
+  <div class="wizard-card d-none" id="step-8">
+    <div class="step-title" data-en="done" data-zh="完成">done</div>
+    <h1 class="step-h" data-en="🎉 You're ready" data-zh="🎉 準備好了">🎉 You're ready</h1>
+    <p class="step-desc"
+       data-en="Save the content below as <code>.env</code> in your repo root, then start the server."
+       data-zh="把下面的內容存成 <code>.env</code> 放到 repo 根目錄，然後啟動 server。">
+    </p>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">.env</label>
+      <pre id="envOut"></pre>
+      <div class="d-flex gap-2">
+        <button class="btn btn-orange btn-sm" onclick="copyEnv()" data-en="📋 Copy" data-zh="📋 複製">📋 Copy</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="downloadEnv()" data-en="⬇️ Download .env" data-zh="⬇️ 下載 .env">⬇️ Download .env</button>
+        <span id="copyOK" class="text-success small ms-2" style="line-height:32px;display:none"
+              data-en="Copied!" data-zh="已複製！">Copied!</span>
+      </div>
+    </div>
+
+    <h5 class="mt-4" data-en="Next: launch the server" data-zh="下一步：啟動 server">Next: launch the server</h5>
+    <pre>cd /path/to/whisperx-uxpipeline
+
+<span data-en="# Save the .env shown above to the repo root."
+      data-zh="# 把上面的 .env 內容存到 repo 根目錄。"># Save the .env shown above to the repo root.</span>
+
+python3.13 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python web/server.py
+
+<span data-en="# Open" data-zh="# 開啟"># Open</span> <span id="launchUrl">http://127.0.0.1:8901</span> <span data-en="in your browser" data-zh="在瀏覽器">in your browser</span></pre>
+
+    <p class="step-desc mt-3"
+       data-en="First-run note: pyannote and Whisper models (~1 GB for <code>medium</code>) auto-download on your first upload. That takes a few minutes."
+       data-zh="首次執行：pyannote 和 Whisper 模型（<code>medium</code> 約 1 GB）會在你第一次上傳時自動下載，需要幾分鐘。">
+    </p>
+    <div class="d-flex justify-content-start mt-4">
+      <button class="btn btn-outline-secondary" onclick="prev()" data-en="← Back" data-zh="← 返回">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Info Modals ── -->
+<div class="modal fade" id="modal-anthropic" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Anthropic
+          <small class="text-muted" data-en="(Claude AI)" data-zh="（Claude AI）">(Claude AI)</small>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="info-section">
+          <div class="info-section-title" data-en="What is it?" data-zh="這是什麼？">What is it?</div>
+          <p data-en="The company behind the Claude AI assistant. They run a paid API that lets developers use Claude to read / write / classify text."
+             data-zh="開發 Claude AI 助理的公司。它提供付費 API，讓開發者用 Claude 來讀寫和分類文字。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="Why does this project use it?" data-zh="這專案用它做什麼？">Why does this project use it?</div>
+          <p data-en="Two steps of the pipeline call Claude Haiku 4.5: (1) classify which speaker is the interviewer vs interviewee, (2) add punctuation to the raw transcript without rewriting content."
+             data-zh="Pipeline 有兩步會呼叫 Claude Haiku 4.5：(1) 判斷哪位 speaker 是訪談者哪位是受訪者，(2) 對原始逐字稿補上標點符號（不修改內容）。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="What token / permission?" data-zh="需要什麼 token？">What token / permission?</div>
+          <p data-en="A standard API key with messages API access (the default permission of any new key). No special scopes needed."
+             data-zh="一支標準的 API key，有 messages API 權限即可（新建 key 預設就有）。不需要特殊權限。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="Cost?" data-zh="費用？">Cost?</div>
+          <p data-en="Haiku 4.5 is the cheapest tier. About NT$ 1–3 per 30-minute audio (assuming ~50K input + 50K output tokens). A $5 USD deposit lasts hundreds of jobs."
+             data-zh="Haiku 4.5 是最便宜的等級。30 分鐘音訊約 NT$ 1–3（假設 5 萬 input + 5 萬 output token）。儲值 $5 美金可跑上百次。"></p>
+        </div>
+        <a href="https://console.anthropic.com/" target="_blank" class="btn btn-orange btn-sm">
+          <span data-en="Go to Anthropic Console →" data-zh="前往 Anthropic Console →">Go to Anthropic Console →</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modal-hf" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">HuggingFace
+          <small class="text-muted" data-en="(model hub)" data-zh="（模型平台）">(model hub)</small>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="info-section">
+          <div class="info-section-title" data-en="What is it?" data-zh="這是什麼？">What is it?</div>
+          <p data-en="A hub for open-source AI models. Think of it as 'GitHub for ML models.' Most research labs publish their models here, including the speaker diarization model we use."
+             data-zh="開源 AI 模型的中央平台，可以想成「ML 模型的 GitHub」。大多數研究機構把模型發布在這裡，包括我們用的聲紋分群模型。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="Why does this project use it?" data-zh="這專案用它做什麼？">Why does this project use it?</div>
+          <p data-en="We download the pyannote speaker-diarization model from HuggingFace on first use (~500 MB). After that the model sits in your local cache and the token isn't called again."
+             data-zh="第一次使用時從 HuggingFace 下載 pyannote 聲紋分群模型（~500 MB）。下載完模型在本機 cache，之後不再需要 token。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="What token / permission?" data-zh="需要什麼 token？">What token / permission?</div>
+          <p data-en="A free 'read' access token. Plus you must visit the pyannote model page and click 'Agree and access repository' to accept the academic license (one-time, no payment)."
+             data-zh="一個免費的「read」access token。另外要到 pyannote 模型頁面點「Agree and access repository」接受學術授權（一次性，無需付費）。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="Cost?" data-zh="費用？">Cost?</div>
+          <p data-en="Free. No payment needed, no usage limits for downloads."
+             data-zh="免費。不需付費，下載沒有用量限制。"></p>
+        </div>
+        <a href="https://huggingface.co/settings/tokens" target="_blank" class="btn btn-orange btn-sm">
+          <span data-en="Get HuggingFace token →" data-zh="取得 HuggingFace token →">Get HuggingFace token →</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modal-slack" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Slack
+          <small class="text-muted" data-en="(team chat)" data-zh="（團隊聊天）">(team chat)</small>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="info-section">
+          <div class="info-section-title" data-en="What is it?" data-zh="這是什麼？">What is it?</div>
+          <p data-en="A team chat platform widely used at companies. If you don't already have a Slack workspace, you can skip this step entirely."
+             data-zh="企業常用的團隊聊天平台。如果你還沒有 Slack workspace，整個步驟可以直接跳過。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="Why does this project use it?" data-zh="這專案用它做什麼？">Why does this project use it?</div>
+          <p data-en="When a transcription job finishes (or fails), the server posts a message to a Slack channel. Useful when you upload a long file and want to be alerted instead of refreshing the web page."
+             data-zh="轉錄完成（或失敗）時，server 會自動在 Slack 頻道發訊息。當你傳了長檔不想一直 refresh 網頁，這個通知很方便。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="What token / permission?" data-zh="需要什麼權限？">What token / permission?</div>
+          <p data-en="An 'Incoming Webhook' URL — the only credential needed. It's scoped to a single channel (you pick which). No bot, no OAuth, no user mention needed."
+             data-zh="一個「Incoming Webhook」URL，僅此而已。它只能對你選定的某一個頻道發訊息，不需要 bot、OAuth 或 user 權限。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="Cost?" data-zh="費用？">Cost?</div>
+          <p data-en="Free. Standard Slack features."
+             data-zh="免費。Slack 標準功能。"></p>
+        </div>
+        <a href="https://api.slack.com/messaging/webhooks" target="_blank" class="btn btn-orange btn-sm">
+          <span data-en="Set up webhook →" data-zh="建立 webhook →">Set up webhook →</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-bar">
+  <a href="https://github.com/uxbryan/whisperx-uxpipeline" class="text-muted text-decoration-none">whisperx-uxpipeline</a>
+  · MIT License · <span data-en="Wizard runs 100% in your browser" data-zh="精靈完全在瀏覽器執行">Wizard runs 100% in your browser</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── Language toggle ──
+function setLang(lang) {
+  document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+  document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+  document.getElementById('lang-zh').classList.toggle('active', lang === 'zh');
+  // text-only
+  document.querySelectorAll('[data-' + lang + ']').forEach(el => {
+    el.textContent = el.getAttribute('data-' + lang);
+  });
+  // HTML allowed (links, code, em, strong)
+  document.querySelectorAll('[data-' + lang + '-html]').forEach(el => {
+    el.innerHTML = el.getAttribute('data-' + lang + '-html');
+  });
+  // Elements with both data-en and data-zh that contain HTML — promote to innerHTML
+  document.querySelectorAll('[data-en][data-zh]').forEach(el => {
+    const val = el.getAttribute('data-' + lang);
+    if (val.includes('<')) el.innerHTML = val;
+  });
+  localStorage.setItem('setup-lang', lang);
+}
+
+// ── Wizard nav ──
+let step = 1;
+const total = 8;
+
+function show(n) {
+  document.querySelectorAll('.wizard-card').forEach(c => c.classList.add('d-none'));
+  document.getElementById('step-' + n).classList.remove('d-none');
+  document.getElementById('stepNum').textContent = n;
+  document.getElementById('stepTotal').textContent = total;
+  const pills = document.querySelectorAll('#progress .pill');
+  pills.forEach((p, i) => {
+    p.classList.remove('done', 'active');
+    if (i < n - 1) p.classList.add('done');
+    else if (i === n - 1) p.classList.add('active');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function next() { if (step < total) { step++; show(step); } }
+function prev() { if (step > 1) { step--; show(step); } }
+
+function generate() {
+  const skipLlm  = document.getElementById('skipLlm').checked;
+  const aKey     = document.getElementById('anthropicKey').value.trim();
+  const hfToken  = document.getElementById('hfToken').value.trim();
+  const slack    = document.getElementById('slackWebhook').value.trim();
+  const port     = document.getElementById('port').value.trim() || '8901';
+  const host     = document.getElementById('host').value.trim() || '127.0.0.1';
+  const srcDir   = document.getElementById('sourceDir').value.trim() || './data/source';
+  const resDir   = document.getElementById('resultDir').value.trim() || './data/result';
+
+  const lines = [];
+  lines.push('# Generated by setup.html on ' + new Date().toISOString().slice(0, 10));
+  lines.push('');
+  if (skipLlm) {
+    lines.push('LLM_ENABLED=false');
+  } else {
+    lines.push('ANTHROPIC_API_KEY=' + (aKey || 'sk-ant-...'));
+  }
+  lines.push('HF_TOKEN=' + (hfToken || 'hf_...'));
+  if (slack) lines.push('SLACK_WEBHOOK_URL=' + slack);
+  lines.push('');
+  if (port !== '8901') lines.push('PORT=' + port);
+  if (host !== '127.0.0.1') lines.push('HOST=' + host);
+  if (srcDir !== './data/source') lines.push('SOURCE_DIR=' + srcDir);
+  if (resDir !== './data/result') lines.push('RESULT_DIR=' + resDir);
+
+  const env = lines.join('\n') + '\n';
+  document.getElementById('envOut').textContent = env;
+  document.getElementById('launchUrl').textContent = 'http://' + host + ':' + port;
+  next();
+}
+
+function copyEnv() {
+  const txt = document.getElementById('envOut').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    const ok = document.getElementById('copyOK');
+    ok.style.display = 'inline';
+    setTimeout(() => ok.style.display = 'none', 1800);
+  });
+}
+
+function downloadEnv() {
+  const txt = document.getElementById('envOut').textContent;
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '.env';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// init: restore previously chosen lang
+const savedLang = localStorage.getItem('setup-lang') || 'en';
+setLang(savedLang);
+show(1);
+</script>
+</body>
+</html>

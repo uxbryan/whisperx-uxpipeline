@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Upload — whisperx-uxpipeline{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12">
+    <div class="card p-4">
+      <h4 class="mb-3">Upload audio / video</h4>
+      <div class="text-muted mb-3" style="font-size:13px">Speech → speaker-labeled, punctuated transcript</div>
+
+      <form id="uploadForm" enctype="multipart/form-data">
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold">Type</label>
+            <select name="meeting_type" class="form-select">
+              <option value="other" selected>Other</option>
+              <option value="interview">Interview</option>
+              <option value="lecture">Lecture</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Quality</label>
+            <select name="whisper_model" class="form-select">
+              {% set quality_label = {'small': 'Fast', 'medium': 'Balanced', 'large-v3': 'Best'} %}
+              {% for m in whisper_models %}
+                <option value="{{ m }}" {% if m == whisper_default %}selected{% endif %}>
+                  {{ quality_label.get(m, m) }}{% if m == whisper_default %} (recommended){% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">File</label>
+          <input type="file" name="file" id="fileInput" class="form-control"
+                 accept="{{ supported_ext|join(',') }}" required>
+        </div>
+
+        <button type="submit" class="btn btn-orange px-4">Upload</button>
+      </form>
+
+      <div id="result" class="mt-4"></div>
+    </div>
+
+    {% if recent_jobs %}
+    <details open class="card mt-4 collapsible">
+      <summary class="d-flex justify-content-between align-items-center p-3 border-bottom">
+        <div class="fw-semibold">Recent jobs<span class="chevron">▾</span></div>
+        <a href="/jobs" class="small text-muted text-decoration-none" onclick="event.stopPropagation()">View all →</a>
+      </summary>
+      <table class="table table-hover mb-0">
+        <tbody>
+          {% for job in recent_jobs %}
+          <tr style="cursor:pointer" onclick="location.href='/jobs/{{ job.id }}'">
+            <td class="ps-3" style="width:50%">
+              <div class="fw-semibold text-truncate">{{ job.original_name }}</div>
+              <div class="text-muted small">{{ job.created_at[:16].replace('T', ' ') }}</div>
+            </td>
+            <td class="text-center">
+              {% if job.status == 'done' %}<span class="badge-status badge-done">✓ Done</span>
+              {% elif job.status == 'failed' %}<span class="badge-status badge-failed">✗ Failed</span>
+              {% elif job.status == 'pending' %}<span class="badge-status badge-pending">Queued</span>
+              {% else %}<span class="badge-status badge-running">{{ job.progress_pct }}%</span>
+              {% endif %}
+            </td>
+            <td class="text-end pe-3">
+              {% if job.status == 'done' %}
+                <a href="/api/jobs/{{ job.id }}/download/polished" class="btn btn-sm btn-orange"
+                   onclick="event.stopPropagation()">Download</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </details>
+    {% endif %}
+
+    <details open class="card mt-4 p-4 collapsible">
+      <summary class="fw-bold mb-3" style="font-size:15px">About this pipeline<span class="chevron">▾</span></summary>
+
+      <div class="about-section">
+        <div class="about-title">What it does</div>
+        <p>Upload a meeting / interview / lecture recording (audio or video). The pipeline transcribes it, separates speakers, converts to Traditional Chinese (configurable), and adds punctuation. You get a readable transcript with timestamps and speaker labels.</p>
+      </div>
+
+      <div class="about-section">
+        <div class="about-title">Pipeline</div>
+        <table class="table table-sm" style="font-size:13px">
+          <thead class="table-light">
+            <tr><th>Step</th><th>Tool</th><th>Where</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Transcription</td><td>WhisperX (large-v3 / medium / small)</td><td><span class="badge bg-success">Local AI · $0</span></td></tr>
+            <tr><td>Word alignment</td><td>WhisperX align</td><td><span class="badge bg-success">Local AI · $0</span></td></tr>
+            <tr><td>Speaker diarization</td><td>pyannote.audio</td><td><span class="badge bg-success">Local AI · $0</span></td></tr>
+            <tr><td>Simplified→Traditional</td><td>OpenCC (dictionary)</td><td><span class="badge bg-success">Local · $0</span></td></tr>
+            <tr><td>Role classification</td><td>Claude Haiku 4.5 (5-sample prompt)</td><td><span class="badge bg-warning text-dark">Anthropic API</span></td></tr>
+            <tr><td>Punctuation polish</td><td>Claude Haiku 4.5 (no rewrites)</td><td><span class="badge bg-warning text-dark">Anthropic API</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="about-section">
+        <div class="about-title">Quality options</div>
+        <table class="table table-sm" style="font-size:13px">
+          <thead class="table-light">
+            <tr><th>Quality</th><th>Model</th><th>30-min audio ≈</th><th>When to use</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Fast</td><td><code>small</code></td><td>~3 min</td><td>Quick notes</td></tr>
+            <tr><td><b>Balanced (default)</b></td><td><code>medium</code></td><td>~6 min</td><td>Most cases</td></tr>
+            <tr><td>Best</td><td><code>large-v3</code></td><td>~12 min</td><td>Important interviews</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="about-section">
+        <div class="about-title">Privacy</div>
+        <ul class="about-list">
+          <li><b>Audio files</b> never leave your machine. Transcription, alignment, diarization, and OpenCC all run locally.</li>
+          <li><b>Transcribed text</b> is sent to Anthropic API for the last two steps (role classification + punctuation). Set <code>LLM_ENABLED=false</code> to skip them.</li>
+          <li><b>No telemetry</b>. This project does not phone home.</li>
+        </ul>
+      </div>
+
+      <div class="text-muted" style="font-size:12px">
+        Open source · <a href="https://github.com/uxbryan/whisperx-uxpipeline" class="text-decoration-none">GitHub</a> · MIT License
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const result = document.getElementById('result');
+  const btn = form.querySelector('button[type=submit]');
+  const file = document.getElementById('fileInput').files[0];
+
+  result.innerHTML = `<div class="alert alert-info">Uploading… (${(file.size/1024/1024).toFixed(1)} MB)</div>`;
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch('/api/upload', { method: 'POST', body: new FormData(form) });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.detail || 'Upload failed');
+    result.innerHTML = `<div class="alert alert-success mb-0">Upload complete, processing…</div>`;
+    form.reset();
+    setTimeout(() => location.reload(), 1500);
+  } catch (err) {
+    result.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+{% set running_statuses = ['pending','transcribing','aligning','diarizing','classifying','polishing'] %}
+{% set has_running = recent_jobs|selectattr('status', 'in', running_statuses)|list|length %}
+{% if has_running %}
+setTimeout(() => location.reload(), 5000);
+{% endif %}
+</script>
+{% endblock %}
