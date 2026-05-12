@@ -26,27 +26,52 @@ git clone https://github.com/uxbryan/whisperx-uxpipeline.git
 cd whisperx-uxpipeline
 ```
 
-**Option A — Setup wizard (recommended):** open
-[**uxbryan.github.io/whisperx-uxpipeline/setup.html**](https://uxbryan.github.io/whisperx-uxpipeline/setup.html)
-in your browser. It walks you through the API keys and writes a ready-to-use
-`.env` file. The wizard runs 100% locally; nothing is sent anywhere.
+Three steps total. Follow them in order:
 
-**Option B — Manual:**
+### Step 1 — get an `.env` file
+
+Open
+[**uxbryan.github.io/whisperx-uxpipeline/setup.html**](https://uxbryan.github.io/whisperx-uxpipeline/setup.html)
+in your browser. The wizard walks you through:
+
+- Anthropic API key (for LLM punctuation polish — or skip to run free)
+- HuggingFace token + accepting pyannote terms (for speaker diarization)
+- Optional Slack webhook
+- Server/storage settings
+
+At the end you get a `.env` file content. Save it to the repo root:
+
+```bash
+pbpaste > .env          # after clicking Copy in the wizard
+# or
+mv ~/Downloads/env.txt .env   # if you used Download
+```
+
+The wizard runs 100% locally; values never leave your browser.
+
+### Step 2 — install + verify
 
 ```bash
 python3.13 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
-cp .env.example .env
-# Edit .env: at minimum set ANTHROPIC_API_KEY and HF_TOKEN.
-# HF_TOKEN: free at https://huggingface.co/settings/tokens
-#           then visit https://huggingface.co/pyannote/speaker-diarization-3.1 to accept terms
+.venv/bin/python scripts/check_setup.py
+```
 
+`check_setup.py` is a verification script that tests every prerequisite:
+.env presence, Python version, ffmpeg, packages, API key validity,
+HuggingFace terms acceptance, storage permissions. Each item gets a ✓ or ✗
+with a concrete fix command. **Don't move to Step 3 until all ✓.**
+
+### Step 3 — launch
+
+```bash
 .venv/bin/python web/server.py
 # → open http://localhost:8901
 ```
 
-First run downloads Whisper (~770 MB for `medium`) + pyannote models to `~/.cache/huggingface/`.
+First upload downloads Whisper (~770 MB for `medium`) + pyannote models
+to `~/.cache/huggingface/`. Subsequent uploads are fast.
 
 ## Upload routes
 

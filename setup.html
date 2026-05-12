@@ -165,33 +165,74 @@
 
   <!-- ── Step 4: HuggingFace ── -->
   <div class="wizard-card d-none" id="step-4">
-    <div class="step-title" data-en="speaker diarization" data-zh="聲紋分群">speaker diarization</div>
+    <div class="step-title" data-en="speaker model access" data-zh="聲紋模型存取">speaker model access</div>
     <h1 class="step-h">
-      <span data-en="HuggingFace token" data-zh="HuggingFace token">HuggingFace token</span>
-      <button class="info-btn" data-bs-toggle="modal" data-bs-target="#modal-hf" title="What is HuggingFace?">i</button>
+      <span data-en="HuggingFace setup" data-zh="HuggingFace 設定">HuggingFace setup</span>
+      <button class="info-btn" data-bs-toggle="modal" data-bs-target="#modal-hf" title="Why so many steps?">i</button>
     </h1>
     <p class="step-desc"
-       data-en="Used to download the <code>pyannote</code> speaker diarization model on first run. Token is only needed once; model is then cached locally."
-       data-zh="用來下載 <code>pyannote</code> 聲紋分群模型（只在第一次需要，之後模型 cache 在本機）。">
+       data-en="The speaker diarization model (pyannote) is <strong>gated</strong> on HuggingFace. To download it you need <strong>two things</strong>: (a) accept the model terms on your HuggingFace account, (b) a token so the pipeline can download as you. Both are free."
+       data-zh="聲紋分群模型（pyannote）在 HuggingFace 上是<strong>限制取用</strong>的，需要兩件事才能下載：(a) 用你的 HuggingFace 帳號接受模型條款、(b) 一個 token 讓 pipeline 代你下載。兩者都免費。">
     </p>
-    <div class="step-desc">
-      <strong data-en="Two steps required:" data-zh="兩步驟：">Two steps required:</strong>
-      <ol style="font-size:14px;line-height:1.75">
-        <li data-en-html='Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" class="external-link">huggingface.co/settings/tokens →</a> Create new (read access is enough)'
-            data-zh-html='到 <a href="https://huggingface.co/settings/tokens" target="_blank" class="external-link">huggingface.co/settings/tokens →</a> 取得免費 token（read 權限即可）'>
-            Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" class="external-link">huggingface.co/settings/tokens →</a> Create new (read access is enough)
-        </li>
-        <li data-en-html='Accept the pyannote terms: visit <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank" class="external-link">pyannote/speaker-diarization-3.1 →</a> and click "Agree and access repository"'
-            data-zh-html='接受 pyannote 條款：到 <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank" class="external-link">pyannote/speaker-diarization-3.1 →</a> 點「Agree and access repository」'>
-            Accept the pyannote terms
-        </li>
-      </ol>
+
+    <!-- Already-set-up shortcut -->
+    <div class="alert alert-info" style="font-size:13px">
+      <strong data-en="Already use HuggingFace CLI?" data-zh="已經用過 HuggingFace CLI？">Already use HuggingFace CLI?</strong>
+      <span data-en='If you ran <code>huggingface-cli login</code> before, leave the token field blank — the pipeline auto-reads from <code>~/.cache/huggingface/token</code>. You still need step [B] below for terms acceptance.'
+            data-zh='若你之前跑過 <code>huggingface-cli login</code>，token 欄留白就好 — pipeline 會自動讀 <code>~/.cache/huggingface/token</code>。但 [B] 條款還是要去點。'></span>
     </div>
-    <div class="mb-3">
-      <label class="form-label fw-semibold" data-en="Paste your token" data-zh="貼上你的 token">Paste your token</label>
+
+    <h6 class="fw-bold mt-3" style="font-size:14px"
+        data-en="Three steps, in this order:" data-zh="三步驟，依序：">Three steps, in this order:</h6>
+
+    <div class="step-desc" style="margin-left:8px">
+      <div class="mb-3">
+        <strong>[A]</strong> <span data-en="Create a free HuggingFace account" data-zh="註冊免費 HuggingFace 帳號">Create a free HuggingFace account</span><br>
+        <a href="https://huggingface.co/join" target="_blank" class="external-link">→ huggingface.co/join</a>
+        <span class="text-muted" data-en="(skip if you already have one)" data-zh="（已有帳號就略過）">(skip if you already have one)</span>
+      </div>
+
+      <div class="mb-3">
+        <strong>[B]</strong> <span data-en="Log in to HuggingFace and accept terms on BOTH model pages:" data-zh="登入 HuggingFace，並在以下<strong>兩個</strong>模型頁面點同意條款：">Log in to HuggingFace and accept terms on BOTH model pages:</span>
+        <ol style="margin-top:6px">
+          <li><a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank" class="external-link">pyannote/speaker-diarization-3.1 →</a></li>
+          <li><a href="https://huggingface.co/pyannote/segmentation-3.0" target="_blank" class="external-link">pyannote/segmentation-3.0 →</a></li>
+        </ol>
+        <span data-en='Both pages show a form near the top — fill the (one or two) required fields and click <strong>"Agree and access repository"</strong>. Approval is instant.'
+              data-zh='兩個頁面頂端都有同意表單 — 填一兩個必填欄位後按 <strong>「Agree and access repository」</strong>。會立即生效。'></span>
+      </div>
+
+      <div class="mb-3">
+        <strong>[C]</strong> <span data-en="Generate a token" data-zh="產生 token">Generate a token</span><br>
+        <a href="https://huggingface.co/settings/tokens" target="_blank" class="external-link">→ huggingface.co/settings/tokens</a>
+        <ul style="margin-top:6px">
+          <li data-en-html='Click <strong>"+ Create new token"</strong>'
+              data-zh-html='點 <strong>「+ Create new token」</strong>'></li>
+          <li data-en-html='Type: choose <strong>"Read"</strong> (the classic tab, <em>not</em> Fine-grained)'
+              data-zh-html='類型選 <strong>「Read」</strong>（classic 分頁，<em>不是</em> Fine-grained）'></li>
+          <li data-en="Name it anything (e.g. whisperx-uxpipeline)"
+              data-zh="名字隨便取（例如 whisperx-uxpipeline）"></li>
+          <li data-en-html='Click Create, then <strong>copy the hf_... string</strong> immediately (HF only shows it once)'
+              data-zh-html='按 Create，然後<strong>立刻複製 hf_... 那串</strong>（HF 只會顯示一次）'></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="alert alert-warning" style="font-size:13px"
+         data-en="⚠️ Important: the account that accepted terms in [B] must be the same account that owns the token in [C]. Mixing accounts is the #1 reason first downloads fail."
+         data-zh="⚠️ 重點：[B] 接受條款的帳號，必須跟 [C] 產生 token 的帳號是同一個。混帳號是第一次下載失敗最常見的原因。">
+    </div>
+
+    <div class="mb-3 mt-4">
+      <label class="form-label fw-semibold"
+             data-en="Paste your token (or leave blank if using HF CLI)"
+             data-zh="貼上 token（用 HF CLI 的話可留白）">Paste your token (or leave blank if using HF CLI)</label>
       <input type="password" class="form-control" id="hfToken" placeholder="hf_...">
-      <div class="form-hint" data-en="Starts with hf_. Stored only in this browser." data-zh="開頭是 hf_。只存在這個瀏覽器。"></div>
+      <div class="form-hint"
+           data-en="Starts with hf_. Stored only in this browser; written to .env at the end."
+           data-zh="開頭是 hf_。只存在這個瀏覽器，最後會寫進 .env。"></div>
     </div>
+
     <div class="d-flex justify-content-between mt-4">
       <button class="btn btn-outline-secondary" onclick="prev()" data-en="← Back" data-zh="← 返回">← Back</button>
       <button class="btn btn-orange px-4" onclick="next()" data-en="Next →" data-zh="下一步 →">Next →</button>
@@ -303,20 +344,47 @@
       </div>
     </div>
 
-    <h5 class="mt-4" data-en="Next: save .env and launch" data-zh="下一步：存 .env 並啟動">Next: save .env and launch</h5>
+    <h5 class="mt-4">
+      <span data-en="3-step launch" data-zh="三步啟動">3-step launch</span>
+    </h5>
+
+    <p class="step-desc">
+      <strong data-en="Step 1 — save the .env above." data-zh="第 1 步 — 把上面的 .env 存到專案根目錄。">Step 1 — save the .env above.</strong>
+      <span data-en="In Terminal:" data-zh="在 Terminal 跑：">In Terminal:</span>
+    </p>
     <pre>cd /path/to/whisperx-uxpipeline
 
-<span data-en="# After clicking Copy above, paste into .env:"
-      data-zh="# 點上面 Copy 之後，貼進 .env："># After clicking Copy above, paste into .env:</span>
-pbpaste > .env             <span data-en="# macOS" data-zh="# macOS"># macOS</span>
-<span data-en="# or if you used Download env.txt:" data-zh="# 或如果用 Download env.txt："># or if you used Download env.txt:</span>
+<span data-en="# Option A: after clicking the Copy button above" data-zh="# 方法 A：點上面的 Copy 按鈕之後"># Option A: after clicking the Copy button above</span>
+pbpaste > .env
+
+<span data-en="# Option B: if you used Download env.txt" data-zh="# 方法 B：如果你用 Download env.txt"># Option B: if you used Download env.txt</span>
 mv ~/Downloads/env.txt .env
 
-python3.13 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python web/server.py
+cat .env   <span data-en="# verify content is correct" data-zh="# 確認內容正確"># verify content is correct</span></pre>
 
-<span data-en="# Open" data-zh="# 開啟"># Open</span> <span id="launchUrl">http://127.0.0.1:8901</span> <span data-en="in your browser" data-zh="在瀏覽器">in your browser</span></pre>
+    <p class="step-desc mt-3">
+      <strong data-en="Step 2 — install dependencies + verify." data-zh="第 2 步 — 安裝依賴 + 驗證設定。">Step 2 — install dependencies + verify.</strong>
+    </p>
+    <pre>python3.13 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+.venv/bin/python scripts/check_setup.py    <span data-en="# ← run this!" data-zh="# ← 跑這一行！"># ← run this!</span></pre>
+    <div class="alert alert-info" style="font-size:13px"
+         data-en="The check script tests everything: .env location, Python version, ffmpeg, packages, API key validity, HuggingFace terms acceptance, and storage permissions. It prints ✓ / ✗ for each item with concrete fix instructions. <strong>Don't proceed to Step 3 until all checks pass.</strong>"
+         data-zh="檢查腳本會驗證每件事：.env 位置、Python 版本、ffmpeg、套件、API key 有效性、HuggingFace 條款是否接受、儲存權限。每項印 ✓ / ✗ 並給具體修正指令。<strong>全部通過再做第 3 步。</strong>">
+    </div>
+
+    <p class="step-desc mt-3">
+      <strong data-en="Step 3 — launch the server." data-zh="第 3 步 — 啟動 server。">Step 3 — launch the server.</strong>
+    </p>
+    <pre>.venv/bin/python web/server.py
+
+<span data-en="# Open" data-zh="# 開啟"># Open</span> <span id="launchUrl">http://127.0.0.1:8901</span> <span data-en="in your browser." data-zh="在瀏覽器。">in your browser.</span></pre>
+
+    <p class="step-desc mt-3"
+       data-en="First upload note: Whisper + pyannote models (~1 GB total) auto-download on the first audio you process. That takes 5–10 min depending on your connection. Subsequent uploads are fast."
+       data-zh="首次上傳：Whisper + pyannote 模型（共約 1 GB）會在你處理第一個音檔時自動下載，依網速約 5-10 分鐘。之後就快了。">
+    </p>
 
     <p class="step-desc mt-3"
        data-en="First-run note: pyannote and Whisper models (~1 GB for <code>medium</code>) auto-download on your first upload. That takes a few minutes."
@@ -368,34 +436,58 @@ python3.13 -m venv .venv
 </div>
 
 <div class="modal fade" id="modal-hf" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">HuggingFace
-          <small class="text-muted" data-en="(model hub)" data-zh="（模型平台）">(model hub)</small>
+          <small class="text-muted" data-en="(open model hub)" data-zh="（開源模型平台）">(open model hub)</small>
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="info-section">
           <div class="info-section-title" data-en="What is it?" data-zh="這是什麼？">What is it?</div>
-          <p data-en="A hub for open-source AI models. Think of it as 'GitHub for ML models.' Most research labs publish their models here, including the speaker diarization model we use."
-             data-zh="開源 AI 模型的中央平台，可以想成「ML 模型的 GitHub」。大多數研究機構把模型發布在這裡，包括我們用的聲紋分群模型。"></p>
+          <p data-en="A hub for open-source AI models — think 'GitHub for ML models'. Researchers publish models here; users download them."
+             data-zh="開源 AI 模型平台，可以想成「ML 模型的 GitHub」。研究者發布模型、使用者下載。"></p>
         </div>
         <div class="info-section">
-          <div class="info-section-title" data-en="Why does this project use it?" data-zh="這專案用它做什麼？">Why does this project use it?</div>
-          <p data-en="We download the pyannote speaker-diarization model from HuggingFace on first use (~500 MB). After that the model sits in your local cache and the token isn't called again."
-             data-zh="第一次使用時從 HuggingFace 下載 pyannote 聲紋分群模型（~500 MB）。下載完模型在本機 cache，之後不再需要 token。"></p>
+          <div class="info-section-title" data-en="Why so many steps?" data-zh="為什麼這麼多步驟？">Why so many steps?</div>
+          <p data-en='Most models are open downloads. A few — including pyannote — are <strong>"gated"</strong>: the authors require you to accept their license terms on a per-account basis before you can download. This is for academic citation tracking, not paywalling. So two things are needed:'
+             data-zh='大多數模型隨便下載。但有些 — 包括 pyannote — 是<strong>「限制取用」</strong>：作者要求<strong>每個帳號</strong>到模型頁面接受授權後才能下載。這是為了學術引用追蹤，不是收費。所以需要兩件事：'></p>
+          <ul style="font-size:14px;color:#475569">
+            <li data-en-html='<strong>Account-level approval:</strong> click "Agree and access repository" on each gated model page (one-time per account per model)'
+                data-zh-html='<strong>帳號層級同意：</strong>到每個被 gate 的模型頁面點「Agree and access repository」（每個帳號每個模型一次性）'></li>
+            <li data-en-html='<strong>API token:</strong> so the pipeline can identify <em>your</em> account when downloading'
+                data-zh-html='<strong>API token：</strong>讓 pipeline 在下載時識別出是<em>你的</em>帳號'></li>
+          </ul>
+          <p data-en="If only one is set, downloads fail with a 401 / 403 error."
+             data-zh="只設定其中一個會以 401 / 403 失敗。"></p>
         </div>
         <div class="info-section">
-          <div class="info-section-title" data-en="What token / permission?" data-zh="需要什麼 token？">What token / permission?</div>
-          <p data-en="A free 'read' access token. Plus you must visit the pyannote model page and click 'Agree and access repository' to accept the academic license (one-time, no payment)."
-             data-zh="一個免費的「read」access token。另外要到 pyannote 模型頁面點「Agree and access repository」接受學術授權（一次性，無需付費）。"></p>
+          <div class="info-section-title" data-en="Which models does this project need?" data-zh="這專案要存取哪些模型？">Which models does this project need?</div>
+          <p data-en="Two gated pyannote models (both academic-licensed, free):"
+             data-zh="兩個被 gate 的 pyannote 模型（皆學術授權、免費）："></p>
+          <ul style="font-size:14px;color:#475569">
+            <li><code>pyannote/speaker-diarization-3.1</code> <span data-en="— the main 'who spoke when' pipeline" data-zh="— 主要的「誰在何時講話」pipeline"></span></li>
+            <li><code>pyannote/segmentation-3.0</code> <span data-en="— internal dependency of the above" data-zh="— 上面那個的內部依賴"></span></li>
+          </ul>
+          <p data-en="Whisper itself is NOT gated and doesn't need terms acceptance."
+             data-zh="Whisper 本身沒被 gate，不需接受條款。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="Classic Read vs Fine-grained?" data-zh="Classic Read vs Fine-grained？">Classic Read vs Fine-grained?</div>
+          <p data-en="HuggingFace now offers two token types. Pick <strong>Classic → Read</strong> — it just works. Fine-grained tokens require explicit per-repo permissions and confuse first-timers."
+             data-zh="HuggingFace 現在有兩種 token 類型。選 <strong>Classic → Read</strong> 就好。Fine-grained 需要為每個 repo 個別設定權限，新手很容易搞錯。"></p>
+        </div>
+        <div class="info-section">
+          <div class="info-section-title" data-en="When is the token actually used?" data-zh="token 什麼時候會被用到？">When is the token actually used?</div>
+          <p data-en="Only during model download — typically the first time you process a file. After that, the model is cached in ~/.cache/huggingface/ and the pipeline runs offline."
+             data-zh="只在下載模型時 — 通常是你第一次處理檔案時。下載完後模型 cache 在 ~/.cache/huggingface/，之後 pipeline 離線運作。"></p>
         </div>
         <div class="info-section">
           <div class="info-section-title" data-en="Cost?" data-zh="費用？">Cost?</div>
-          <p data-en="Free. No payment needed, no usage limits for downloads."
-             data-zh="免費。不需付費，下載沒有用量限制。"></p>
+          <p data-en="Free. Account, terms acceptance, token, and downloads — all free."
+             data-zh="免費。帳號、條款同意、token、下載都免費。"></p>
         </div>
         <a href="https://huggingface.co/settings/tokens" target="_blank" class="btn btn-orange btn-sm">
           <span data-en="Get HuggingFace token →" data-zh="取得 HuggingFace token →">Get HuggingFace token →</span>
